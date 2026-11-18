@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>잔소리메이트 (ZansoriMate)</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: '#0B1326',
+            surface: {
+              DEFAULT: '#0B1326',
+              container: '#171F33',
+              high: '#222A3D',
+              highest: '#2D3449',
+              low: '#131B2E',
+              lowest: '#060E20',
+              variant: '#2D3449',
+            },
+            primary: {
+              DEFAULT: '#FFE600',
+              foreground: '#0F172A',
+              container: '#FDE400',
+            },
+            secondary: {
+              DEFAULT: '#FF6B2B',
+              foreground: '#FFFFFF',
+              container: '#CD4800',
+              dim: '#FFB59A',
+            },
+            prod: {
+              crimson: '#EF4444',
+              alert: '#93000A',
+            },
+            on: {
+              surface: '#DAE2FD',
+              muted: '#94A3B8',
+              variant: '#CDC7AA',
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          boxShadow: {
+            'neon-yellow': '0 0 20px -2px rgba(255, 230, 0, 0.35)',
+            'neon-orange': '0 0 16px -2px rgba(255, 107, 43, 0.35)',
+            'neon-red': '0 0 16px -2px rgba(239, 68, 68, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0B1326;
+      color: #DAE2FD;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      min-height: 100vh;
+    }
+    ::-webkit-scrollbar { display: none; }
+    * { -ms-overflow-style: none; scrollbar-width: none; }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+    .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+    .animate-pulse-glow { animation: pulseGlow 2.5s infinite ease-in-out; }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-[#0B1326]/85 backdrop-blur-xl border-b border-[#171F33] pt-safe">
+    <div class="max-w-md mx-auto h-16 px-4 flex items-center justify-between">
+      <div class="flex items-center gap-2 cursor-pointer" onclick="switchTab('board')">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF6B2B] to-[#FFE600] flex items-center justify-center shadow-neon-yellow">
+          <span class="text-black font-extrabold text-base">Z</span>
+        </div>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-1.5">
+            <span class="font-extrabold text-base tracking-tight text-white">잔소리메이트</span>
+            <span class="px-1.5 py-0.5 rounded-full bg-secondary/20 text-secondary text-[10px] font-bold uppercase tracking-wide">Pro</span>
+            <span id="headerAdminBadge" class="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-[12px]">shield</span>
+              Admin
+            </span>
+          </div>
+          <span class="text-[10px] text-on-muted leading-none">AI 마감일 독촉 협업 플랫폼</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="showToast('🚨 팩폭봇: 현재 마감 임박한 할 일이 1건 있습니다!')" class="relative w-9 h-9 rounded-xl bg-surface-high/70 flex items-center justify-center text-on-surface hover:text-primary active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[20px]">notifications</span>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+        </button>
+
+        <button onclick="toggleRoleSwitchModal()" class="w-9 h-9 rounded-xl overflow-hidden border border-primary/30 flex items-center justify-center bg-surface-high active:scale-95 transition-all" title="계정 정보">
+          <img id="userAvatarImg" src="https://api.dicebear.com/7.x/bottts/svg?seed=AdminJihoon" alt="Avatar" class="w-full h-full object-cover">
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 w-full max-w-md mx-auto pt-20 pb-24 px-4">
+
+    <!-- Toast Notification -->
+    <div id="toastBox" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-secondary text-white font-bold text-xs shadow-neon-orange transition-all duration-300 opacity-0 pointer-events-none">
+      알림 메시지
+    </div>
+
+    <!-- TAB 1: 칸반 홈 보드 -->
+    <div id="tab-board" class="tab-content flex flex-col gap-4">
+      
+      <!-- AI 페르소나 독촉 배너 -->
+      <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-surface-container to-surface-low p-4 border border-secondary/40 shadow-neon-orange">
+        <div class="relative z-10 flex flex-col gap-2.5">
+          <div class="flex items-center justify-between">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-white font-bold text-[11px] shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              <span>🔥 마감사냥꾼 팩폭봇 Lv.3</span>
+            </div>
+            <div class="flex items-center gap-1 text-secondary font-bold text-xs">
+              <span class="material-symbols-outlined text-[15px] animate-pulse">alarm</span>
+              <span>마감 임박 03:00:00</span>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-surface-high border border-surface-high/60 shadow-inner flex items-start gap-3">
+            <div class="w-10 h-10 rounded-full bg-secondary/20 border border-secondary/40 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[22px] text-secondary">local_fire_department</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-extrabold text-white text-sm leading-snug">
+                “지훈님, 발표자료 초안 마감 3시간 전입니다! 딴짓할 시간 없어요 ⏱️”
+              </p>
+              <p class="text-xs text-on-muted mt-1 leading-relaxed">
+                팀장님이 회의록에 등록하신 필수 액션아이템이에요. 얼른 제출하고 퇴근합시다!
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-[11px] text-secondary font-semibold flex items-center gap-1">
+              📢 30분 뒤 팀 슬랙 자동 재촉 발동
+            </span>
+            <button onclick="submitUrgentTask()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary-container text-black font-extrabold text-xs shadow-neon-yellow active:scale-95 transition-all">
+              <span>지금 바로 제출</span>
+              <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI 회의록 간편 퀵 CTA 카드 -->
+      <section class="rounded-3xl bg-surface-container border border-surface-high p-4 flex flex-col gap-3 shadow-md">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">mic</span>
+            </div>
+            <h2 class="font-bold text-sm text-white">방금 끝난 회의가 있나요?</h2>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold">
+            ⚡ AI Instant Sync
+          </span>
+        </div>
+
+        <button onclick="switchTab('summary')" class="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary-container text-black font-extrabold text-xs sm:text-sm flex items-center justify-between shadow-neon-yellow active:scale-[0.98] transition-all">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">smart_toy</span>
+            <span>AI 회의록 자동 추출 및 할 일 생성</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-lg bg-black text-primary text-[11px] font-bold">
+            10초 완성
+          </span>
+        </button>
+
+        <div class="p-2.5 rounded-xl bg-surface-low border border-surface-high/50 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="material-symbols-outlined text-[16px] text-primary shrink-0">check_circle</span>
+            <div class="truncate">
+              <span class="text-[10px] text-on-muted block">오늘 10:30 싱크 요약 완료</span>
+              <span class="font-medium text-white truncate">[2분기 프로덕트 릴리즈 싱크]</span>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-surface-high text-secondary text-[10px] font-bold shrink-0">
+            +4 액션 발굴
+          </span>
+        </div>
+      </section>
+
+      <!-- 칸반 보드 섹션 -->
+      <section class="flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h2 class="font-bold text-base text-white tracking-tight">마감 추적 보드</h2>
+            <span id="totalTaskCountBadge" class="px-2 py-0.5 rounded-full bg-surface-high text-primary text-xs font-bold">4</span>
+          </div>
+          <button onclick="openAddTaskModal()" class="px-2.5 py-1.5 rounded-xl bg-surface-high hover:bg-surface-variant text-on-surface text-xs font-bold flex items-center gap-1 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-[16px] text-primary">add</span>
+            <span>할 일 추가</span>
+          </button>
+        </div>
+
+        <!-- 필터 탭 -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1" id="filterTabGroup">
+          <button onclick="setFilter('all')" class="filter-btn active shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-primary text-black shadow-neon-yellow" data-filter="all">
+            <span>전체</span>
+            <span id="count-all" class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-extrabold bg-black text-primary">4</span>
+          </button>
+          <button onclick="setFilter('todo')" class="filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-surface-high text-on-muted hover:text-white" data-filter="todo">
+            <span>할 일 To Do</span>
+            <span id="count-todo" class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-extrabold bg-surface-variant text-on-surface">2</span>
+          </button>
+          <button onclick="setFilter('inprogress')" class="filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-surface-high text-on-muted hover:text-white" data-filter="inprogress">
+            <span>진행 중 In Progress</span>
+            <span id="count-inprogress" class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-extrabold bg-surface-variant text-on-surface">1</span>
+          </button>
+          <button onclick="setFilter('done')" class="filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-surface-high text-on-muted hover:text-white" data-filter="done">
+            <span>완료 Done</span>
+            <span id="count-done" class="w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-extrabold bg-surface-variant text-on-surface">1</span>
+          </button>
+        </div>
+
+        <!-- 칸반 카드 컨테이너 -->
+        <div id="kanbanCardsContainer" class="flex flex-col gap-3">
+          <!-- Cards injected via JS -->
+        </div>
+      </section>
+
+      <!-- 잔소리 수위 조절기 -->
+      <section class="p-4 rounded-3xl bg-surface-container border border-surface-high flex flex-col gap-2.5 shadow-md">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-primary">tune</span>
+            <h3 class="font-bold text-xs text-white">잔소리 메이트 강도 설정</h3>
+          </div>
+          <span id="globalIntensityLabel" class="text-xs font-bold text-secondary">⚡ 표준 팩폭 (적당히 재촉)</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-surface-low border border-surface-high/50">
+          <button onclick="setIntensity('mild')" class="intensity-btn py-2 rounded-xl text-xs font-bold transition-all text-center text-on-muted hover:text-white" data-intensity="mild">
+            🌱 순한맛
+          </button>
+          <button onclick="setIntensity('standard')" class="intensity-btn py-2 rounded-xl text-xs font-bold transition-all text-center bg-primary text-black shadow-neon-yellow" data-intensity="standard">
+            ⚡ 표준 팩폭
+          </button>
+          <button onclick="setIntensity('extreme')" class="intensity-btn py-2 rounded-xl text-xs font-bold transition-all text-center text-on-muted hover:text-white" data-intensity="extreme">
+            🔥 극대노 모드
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 2: 회의록 AI 분석기 -->
+    <div id="tab-summary" class="tab-content hidden flex flex-col gap-4">
+      <section class="flex flex-col gap-1">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+              <span class="material-symbols-outlined text-[20px]">description</span>
+            </div>
+            <h1 class="font-extrabold text-lg text-white">회의록 AI 분석기</h1>
+          </div>
+          <span class="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold">
+            Gemini AI 탑재
+          </span>
+        </div>
+        <p class="text-xs text-on-muted leading-relaxed">
+          카톡 대화나 회의록을 넣으면 AI가 핵심을 요약하고 잔소리와 함께 할 일을 쪼개드립니다.
+        </p>
+      </section>
+
+      <section class="rounded-3xl bg-surface-container border border-surface-high p-4 flex flex-col gap-3 shadow-md">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-bold text-white flex items-center gap-1.5">
+            <span>회의록 / 단톡방 텍스트</span>
+          </label>
+          <div class="flex items-center gap-1.5">
+            <button onclick="loadSampleTranscript()" class="px-2.5 py-1 rounded-lg bg-surface-high hover:bg-surface-variant text-primary text-[11px] font-bold active:scale-95 transition-all">
+              예시 불러오기
+            </button>
+            <button onclick="clearTranscript()" class="p-1 rounded-lg bg-surface-high hover:bg-prod-crimson/20 text-on-muted hover:text-prod-crimson">
+              <span class="material-symbols-outlined text-[16px]">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="relative">
+          <textarea id="transcriptTextarea" rows="7" placeholder="카카오톡 대화 내용, 슬랙 스레드, 회의 녹취록 텍스트를 그대로 붙여넣어 보세요..." class="w-full p-3.5 rounded-2xl bg-surface-low border border-surface-high text-xs sm:text-sm text-white placeholder-on-muted/60 focus:outline-none focus:border-primary resize-none leading-relaxed"></textarea>
+          <div id="charCount" class="text-right text-[10px] text-on-muted mt-1">0자 입력됨</div>
+        </div>
+
+        <button id="btnSummarize" onclick="runMeetingSummary()" class="w-full py-3.5 rounded-2xl bg-primary hover:bg-primary-container text-black font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-neon-yellow active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+          <span>✨ Gemini AI로 핵심 요약 및 할일 쪼개기</span>
+        </button>
+      </section>
+
+      <!-- 분석 결과 영역 -->
+      <section id="summaryResultArea" class="hidden flex flex-col gap-3">
+        <div class="flex items-center justify-between pt-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-primary animate-ping"></span>
+            <h2 class="font-extrabold text-sm text-white">✨ AI 실시간 분석 결과</h2>
+          </div>
+          <button onclick="copySummaryText()" class="px-2.5 py-1 rounded-xl bg-surface-high text-on-surface text-xs font-bold flex items-center gap-1 active:scale-95">
+            <span class="material-symbols-outlined text-[14px]">content_copy</span>
+            <span>결과 복사</span>
+          </button>
+        </div>
+
+        <!-- 3줄 요약 카드 -->
+        <div class="p-4 rounded-3xl bg-surface-container border border-surface-high flex flex-col gap-2 shadow-md">
+          <span class="font-bold text-xs text-primary">📌 핵심 브리핑 (3줄 요약)</span>
+          <ul id="summaryList" class="flex flex-col gap-2 mt-1">
+            <!-- 요약 리스트 -->
+          </ul>
+        </div>
+
+        <!-- 추출된 할 일 카드 리스트 -->
+        <div class="p-4 rounded-3xl bg-surface-container border border-surface-high flex flex-col gap-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-secondary">✅ 자동 추출된 할 일</span>
+            <span class="text-[10px] text-on-muted">선택 후 칸반 전송</span>
+          </div>
+          <div id="extractedTasksContainer" class="flex flex-col gap-2">
+            <!-- Tasks dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 잔소리 페르소나 선택 -->
+        <div class="p-4 rounded-3xl bg-surface-container border border-surface-high flex flex-col gap-2.5 shadow-md">
+          <span class="font-bold text-xs text-white">전송할 잔소리 톤앤매너 설정</span>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button onclick="setPersonaSelection('fact')" id="persona-btn-fact" class="p-2 rounded-2xl text-left flex flex-col gap-0.5 bg-secondary text-white shadow-neon-orange">
+              <span class="text-xs font-bold">🤖 팩폭봇</span>
+              <span class="text-[10px] opacity-80 truncate">마감 안 지키면 박제</span>
+            </button>
+            <button onclick="setPersonaSelection('aegyo')" id="persona-btn-aegyo" class="p-2 rounded-2xl text-left flex flex-col gap-0.5 bg-surface-high text-on-muted hover:text-white">
+              <span class="text-xs font-bold">🥺 애교봇</span>
+              <span class="text-[10px] opacity-80 truncate">커피 쏠게요 힘내요</span>
+            </button>
+            <button onclick="setPersonaSelection('tsundere')" id="persona-btn-tsundere" class="p-2 rounded-2xl text-left flex flex-col gap-0.5 bg-surface-high text-on-muted hover:text-white">
+              <span class="text-xs font-bold">😤 츤데레</span>
+              <span class="text-[10px] opacity-80 truncate">제때 해둬라 바보야</span>
+            </button>
+          </div>
+        </div>
+
+        <button onclick="transferExtractedTasksToKanban()" class="w-full py-4 rounded-2xl bg-secondary hover:bg-secondary-container text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-neon-orange active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">send</span>
+          <span>🚀 칸반 보드로 할 일 전송 (+독촉봇 연동)</span>
+        </button>
+      </section>
+    </div>
+
+    <!-- TAB 3: 잔소리봇 챗 (도메인 특화 AI 챗봇 및 예외 처리) -->
+    <div id="tab-chat" class="tab-content hidden flex flex-col h-[calc(100vh-12rem)]">
+      <div class="flex items-center justify-between pb-3 border-b border-surface-high">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-[20px]">smart_toy</span>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-sm text-white flex items-center gap-1.5">
+              <span>도메인 특화 AI 챗봇</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </h1>
+            <p class="text-[10px] text-on-muted">포트폴리오 Q&A 및 도메인 가드레일 적용</p>
+          </div>
+        </div>
+        <button onclick="resetChatMessages()" class="p-1.5 rounded-lg bg-surface-high hover:bg-surface-variant text-on-muted hover:text-white" title="대화 초기화">
+          <span class="material-symbols-outlined text-[16px]">refresh</span>
+        </button>
+      </div>
+
+      <!-- 추천 질문 칩 -->
+      <div class="py-2 overflow-x-auto flex items-center gap-1.5 border-b border-surface-high/50">
+        <span class="text-[10px] text-on-muted font-bold shrink-0">추천 질문:</span>
+        <button onclick="sendChatMessage('잔소리메이트 기획 배경과 목적이 뭐야?')" class="shrink-0 px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-high border border-surface-high text-[11px] text-on-muted hover:text-white">
+          기획 배경과 목적?
+        </button>
+        <button onclick="sendChatMessage('어떤 기술 스택으로 개발되었나요?')" class="shrink-0 px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-high border border-surface-high text-[11px] text-on-muted hover:text-white">
+          기술 스택?
+        </button>
+        <button onclick="sendChatMessage('오늘 서울 날씨 어때? (예외 처리 테스트)')" class="shrink-0 px-2.5 py-1 rounded-full bg-prod-alert/20 hover:bg-prod-alert/40 border border-prod-crimson/40 text-[11px] text-prod-crimson font-bold">
+          날씨 질문 (예외 테스트)
+        </button>
+        <button onclick="sendChatMessage('파이썬 로또 코드 짜줘 (예외 처리 테스트)')" class="shrink-0 px-2.5 py-1 rounded-full bg-prod-alert/20 hover:bg-prod-alert/40 border border-prod-crimson/40 text-[11px] text-prod-crimson font-bold">
+          코딩 질문 (예외 테스트)
+        </button>
+      </div>
+
+      <!-- 메시지 스크롤 영역 -->
+      <div id="chatMessagesBox" class="flex-1 overflow-y-auto py-3 space-y-3 pr-1">
+        <!-- Messages populated by JS -->
+      </div>
+
+      <!-- 입력 폼 -->
+      <form onsubmit="handleChatSubmit(event)" class="pt-2 flex items-center gap-2">
+        <input type="text" id="chatInput" placeholder="포트폴리오 질문을 입력하세요 (예외 처리 테스트 가능)..." class="flex-1 px-4 py-3 rounded-2xl bg-surface-container border border-surface-high text-xs text-white placeholder-on-muted/60 focus:outline-none focus:border-primary">
+        <button type="submit" id="btnSendChat" class="w-11 h-11 rounded-2xl bg-primary hover:bg-primary-container text-black flex items-center justify-center shrink-0 shadow-neon-yellow active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">send</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- TAB 4: 관리자 전용 대시보드 -->
+    <div id="tab-admin" class="tab-content hidden flex flex-col gap-4">
+      
+      <!-- 비인가 사용자 차단 뷰 -->
+      <div id="adminDeniedView" class="hidden flex flex-col items-center justify-center py-10 text-center">
+        <div class="w-16 h-16 rounded-3xl bg-prod-alert/20 border border-prod-crimson/40 text-prod-crimson flex items-center justify-center shadow-neon-red mb-4">
+          <span class="material-symbols-outlined text-[32px]">shield_lock</span>
+        </div>
+        <h1 class="text-lg font-extrabold text-white mb-2">관리자 권한이 필요합니다</h1>
+        <p class="text-xs text-on-muted leading-relaxed max-w-xs mb-6">
+          현재 로그인된 계정은 관리자 전용 대시보드 접근 권한이 없습니다. 사전에 지정된 관리자 이메일로 로그인해 주세요.
+        </p>
+
+        <div class="w-full max-w-xs p-4 rounded-3xl bg-surface-container border border-surface-high flex flex-col gap-3 shadow-md">
+          <div class="flex items-center gap-2 text-xs font-bold text-primary">
+            <span class="material-symbols-outlined text-[16px]">vpn_key</span>
+            <span>관리자 계정 즉시 전환 (검증용):</span>
+          </div>
+          <button onclick="switchCurrentUserRole(true)" class="w-full py-3 rounded-2xl bg-primary text-black font-extrabold text-xs shadow-neon-yellow active:scale-95 transition-all">
+            🛡️ admin@zansorimate.com 으로 전환
+          </button>
+        </div>
+      </div>
+
+      <!-- 인가된 관리자 전용 대시보드 뷰 -->
+      <div id="adminAuthorizedView" class="flex flex-col gap-4">
+        <section class="flex items-center justify-between pb-2 border-b border-surface-high">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center shadow-neon-yellow">
+              <span class="material-symbols-outlined text-[20px]">verified_user</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h1 class="font-extrabold text-base text-white">관리자 대시보드</h1>
+                <span class="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold">
+                  Admin Authorized
+                </span>
+              </div>
+              <p id="adminUserEmailLabel" class="text-[10px] text-on-muted truncate max-w-[200px]">
+                접속자: admin@zansorimate.com (관리자)
+              </p>
+            </div>
+          </div>
+          <button onclick="switchCurrentUserRole(false)" class="px-2.5 py-1.5 rounded-xl bg-surface-high hover:bg-surface-variant text-[11px] font-bold text-on-muted hover:text-white">
+            일반 유저로 변경
+          </button>
+        </section>
+
+        <!-- 핵심 통계 그리드 -->
+        <section class="grid grid-cols-2 gap-2.5">
+          <div class="p-3.5 rounded-2xl bg-surface-container border border-surface-high flex flex-col gap-1 shadow-sm">
+            <div class="flex items-center justify-between text-on-muted">
+              <span class="text-xs font-semibold">총 생성 할 일</span>
+              <span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+            </div>
+            <span id="adminStatTasks" class="text-xl font-extrabold text-white">4개</span>
+            <span id="adminStatDoneRate" class="text-[10px] text-emerald-400">완료율 25%</span>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-surface-container border border-surface-high flex flex-col gap-1 shadow-sm">
+            <div class="flex items-center justify-between text-on-muted">
+              <span class="text-xs font-semibold">AI 잔소리 발송</span>
+              <span class="material-symbols-outlined text-[16px] text-secondary animate-pulse">local_fire_department</span>
+            </div>
+            <span id="adminStatNagging" class="text-xl font-extrabold text-secondary">5회</span>
+            <span class="text-[10px] text-on-muted">평균 마감 준수 88%</span>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-surface-container border border-surface-high flex flex-col gap-1 shadow-sm">
+            <div class="flex items-center justify-between text-on-muted">
+              <span class="text-xs font-semibold">요약된 회의록</span>
+              <span class="material-symbols-outlined text-[16px] text-primary">history_edu</span>
+            </div>
+            <span class="text-xl font-extrabold text-white">12건</span>
+            <span class="text-[10px] text-on-muted">Gemini AI 처리</span>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-surface-container border border-surface-high flex flex-col gap-1 shadow-sm">
+            <div class="flex items-center justify-between text-on-muted">
+              <span class="text-xs font-semibold">활성 팀원 수</span>
+              <span class="material-symbols-outlined text-[16px] text-primary">group</span>
+            </div>
+            <span class="text-xl font-extrabold text-white">4명</span>
+            <span class="text-[10px] text-emerald-400">전원 활동 중</span>
+          </div>
+        </section>
+
+        <!-- 최근 AI 독촉 발송 실시간 로그 -->
+        <section class="rounded-3xl bg-surface-container border border-surface-high p-4 flex flex-col gap-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[18px] text-secondary">campaign</span>
+              <h2 class="font-bold text-xs text-white">최근 AI 독촉 발송 로그</h2>
+            </div>
+            <span class="text-[10px] text-on-muted">실시간 스트림</span>
+          </div>
+
+          <div id="adminNaggingLogsList" class="flex flex-col gap-2">
+            <!-- Logs populated via JS -->
+          </div>
+        </section>
+
+        <!-- 시스템 인프라 연동 상태 -->
+        <section class="rounded-3xl bg-surface-container border border-surface-high p-4 flex flex-col gap-2.5 shadow-md">
+          <h2 class="font-bold text-xs text-white flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-primary">cloud_done</span>
+            <span>기술 스택 인프라 상태</span>
+          </h2>
+
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-surface-low border border-surface-high/50 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span class="font-semibold text-white">Google Apps Script Web App</span>
+              </div>
+              <span class="text-[10px] text-emerald-400 font-bold">Online & Deployed</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-surface-low border border-surface-high/50 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span class="font-semibold text-white">Google Gemini 1.5 Flash</span>
+              </div>
+              <span class="text-[10px] text-emerald-400 font-bold">Prompt Engine Ready</span>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-surface-low border border-surface-high/50 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span class="font-semibold text-white">Properties Service DB</span>
+              </div>
+              <span class="text-[10px] text-emerald-400 font-bold">Auto Sync</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 하단 고정 4버튼 네비게이션 -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-[#060E20]/95 backdrop-blur-xl border-t border-[#171F33] pb-safe">
+    <div class="max-w-md mx-auto flex items-center justify-around h-16 px-2">
+      <button onclick="switchTab('board')" id="nav-btn-board" class="nav-item flex flex-col items-center justify-center w-16 h-12 rounded-xl text-primary font-bold active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[22px]">view_kanban</span>
+        <span class="text-[11px] leading-tight tracking-tight">홈 보드</span>
+      </button>
+
+      <button onclick="switchTab('summary')" id="nav-btn-summary" class="nav-item flex flex-col items-center justify-center w-16 h-12 rounded-xl text-on-muted hover:text-white active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[22px]">history_edu</span>
+        <span class="text-[11px] leading-tight tracking-tight">회의록 요약</span>
+      </button>
+
+      <button onclick="switchTab('chat')" id="nav-btn-chat" class="nav-item flex flex-col items-center justify-center w-16 h-12 rounded-xl text-on-muted hover:text-white active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[22px]">mode_comment</span>
+        <span class="text-[11px] leading-tight tracking-tight">잔소리봇</span>
+      </button>
+
+      <button onclick="switchTab('admin')" id="nav-btn-admin" class="nav-item flex flex-col items-center justify-center w-16 h-12 rounded-xl text-on-muted hover:text-white active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[22px]">shield</span>
+        <span class="text-[11px] leading-tight tracking-tight">관리자</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- AI 잔소리 콕 찌르기 모달 -->
+  <div id="naggingModal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm">
+    <div class="w-full max-w-md bg-surface-container border border-surface-high rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-2 border-b border-surface-high">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-xl bg-secondary/20 text-secondary">
+            <span class="material-symbols-outlined text-[20px] animate-pulse">local_fire_department</span>
+          </span>
+          <div>
+            <h3 class="font-bold text-base text-white">AI 페르소나 잔소리 콕 찌르기</h3>
+            <p class="text-xs text-on-muted">팀장 대신 AI가 위트 있게 재촉해드립니다</p>
+          </div>
+        </div>
+        <button onclick="closeNaggingModal()" class="w-8 h-8 rounded-full bg-surface-high flex items-center justify-center text-on-muted hover:text-white">✕</button>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-surface-low border border-surface-high/50 flex flex-col gap-1">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-on-muted">대상: <strong id="modalTargetAssignee" class="text-primary">지훈</strong></span>
+          <span id="modalTargetSource" class="px-2 py-0.5 rounded-full bg-secondary/20 text-secondary text-[11px] font-bold">2분기 프로덕트 싱크</span>
+        </div>
+        <p id="modalTargetTitle" class="text-sm font-semibold text-white line-clamp-1">할 일 제목</p>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-bold text-on-muted">잔소리 페르소나 선택:</label>
+        <div class="grid grid-cols-4 gap-1.5">
+          <button onclick="setModalPersona('fact')" id="m-persona-fact" class="modal-p-btn py-2 px-1 rounded-xl text-xs font-bold bg-primary text-black shadow-neon-yellow">🤖 팩폭봇</button>
+          <button onclick="setModalPersona('aegyo')" id="m-persona-aegyo" class="modal-p-btn py-2 px-1 rounded-xl text-xs font-bold bg-surface-high text-on-muted">🥺 애교봇</button>
+          <button onclick="setModalPersona('tsundere')" id="m-persona-tsundere" class="modal-p-btn py-2 px-1 rounded-xl text-xs font-bold bg-surface-high text-on-muted">😤 츤데레</button>
+          <button onclick="setModalPersona('sparta')" id="m-persona-sparta" class="modal-p-btn py-2 px-1 rounded-xl text-xs font-bold bg-surface-high text-on-muted">🔥 스파르타</button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-bold text-on-muted">잔소리 강도 수위:</label>
+        <div class="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-surface-low">
+          <button onclick="setModalIntensity('mild')" id="m-intensity-mild" class="modal-i-btn py-1.5 rounded-lg text-xs font-bold text-on-muted">🌱 순한맛</button>
+          <button onclick="setModalIntensity('standard')" id="m-intensity-standard" class="modal-i-btn py-1.5 rounded-lg text-xs font-bold bg-secondary text-white shadow-neon-orange">⚡ 표준 팩폭</button>
+          <button onclick="setModalIntensity('extreme')" id="m-intensity-extreme" class="modal-i-btn py-1.5 rounded-lg text-xs font-bold text-on-muted">🔥 극대노</button>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-surface-high border border-primary/30 min-h-[90px] flex items-center">
+        <p id="modalNaggingMessageBox" class="text-sm text-white font-medium leading-relaxed break-keep">
+          “지훈님, 발표자료 초안 마감 3시간 전입니다! 딴짓할 시간 없어요 ⏱️”
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button onclick="copyModalNaggingMessage()" class="flex-1 py-3 rounded-xl bg-surface-high hover:bg-surface-variant text-on-surface text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
+          <span class="material-symbols-outlined text-[16px]">content_copy</span>
+          <span id="modalCopyBtnText">문구 복사</span>
+        </button>
+        <button onclick="sendModalNaggingAction()" class="flex-[2] py-3 rounded-xl bg-primary hover:bg-primary-container text-black text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-neon-yellow active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[16px]">send</span>
+          <span>콕 찌르기 발송 (+알림)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 직접 할 일 추가 모달 -->
+  <div id="addTaskModal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm">
+    <div class="w-full max-w-md bg-surface-container border border-surface-high rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between pb-2 border-b border-surface-high">
+        <h3 class="font-bold text-base text-white">새 할 일 직접 추가</h3>
+        <button onclick="closeAddTaskModal()" class="w-8 h-8 rounded-full bg-surface-high flex items-center justify-center text-on-muted hover:text-white">✕</button>
+      </div>
+      <form onsubmit="handleAddTaskSubmit(event)" class="flex flex-col gap-3">
+        <div>
+          <label class="text-xs text-on-muted font-bold block mb-1">할 일 제목 *</label>
+          <input type="text" id="newTaskTitle" placeholder="예: 2차 스프린트 기획서 검토" required class="w-full px-3 py-2.5 rounded-xl bg-surface-low border border-surface-high text-white text-xs focus:outline-none focus:border-primary">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-on-muted font-bold block mb-1">담당자</label>
+            <input type="text" id="newTaskAssignee" placeholder="지훈 / 민수 / 수진" value="나" class="w-full px-3 py-2 rounded-xl bg-surface-low border border-surface-high text-white text-xs focus:outline-none focus:border-primary">
+          </div>
+          <div>
+            <label class="text-xs text-on-muted font-bold block mb-1">마감 기한</label>
+            <select id="newTaskHours" class="w-full px-3 py-2 rounded-xl bg-surface-low border border-surface-high text-white text-xs focus:outline-none focus:border-primary">
+              <option value="3">3시간 뒤 (초긴급)</option>
+              <option value="12">12시간 뒤</option>
+              <option value="24" selected>1일 뒤 (내일)</option>
+              <option value="72">3일 뒤</option>
+              <option value="168">1주일 뒤</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="mt-2 w-full py-3 rounded-xl bg-primary text-black font-extrabold text-xs shadow-neon-yellow active:scale-95 transition-all">
+          할 일 카드 생성하기
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 역할 전환 모달 -->
+  <div id="roleSwitchModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-xs bg-surface-container border border-surface-high rounded-3xl p-5 shadow-2xl flex flex-col gap-3">
+      <div class="flex items-center justify-between pb-2 border-b border-surface-high">
+        <h4 class="font-bold text-sm text-white">사용자 계정 상태</h4>
+        <button onclick="toggleRoleSwitchModal()" class="text-on-muted hover:text-white">✕</button>
+      </div>
+      <p id="roleModalEmail" class="text-xs text-on-muted">admin@zansorimate.com</p>
+      <div class="flex flex-col gap-2 pt-1">
+        <button onclick="switchCurrentUserRole(true); toggleRoleSwitchModal();" class="w-full py-2.5 rounded-xl bg-primary/20 text-primary border border-primary/40 font-bold text-xs text-left px-3">
+          🛡️ 관리자 (admin@zansorimate.com)
+        </button>
+        <button onclick="switchCurrentUserRole(false); toggleRoleSwitchModal();" class="w-full py-2.5 rounded-xl bg-surface-high text-on-surface font-bold text-xs text-left px-3 hover:bg-surface-variant">
+          👤 일반 팀원 (sua@startup.com)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client-Side JavaScript Logic -->
+  <script>
+    // 전역 상태
+    let appState = {
+      currentUser: { email: 'admin@zansorimate.com', name: '김지훈', isAdmin: true },
+      currentFilter: 'all',
+      globalIntensity: 'standard',
+      tasks: [],
+      naggingLogs: [],
+      modalTask: null,
+      modalPersona: 'fact',
+      modalIntensity: 'standard',
+      extractedTasks: [],
+      extractedSummary: null,
+      selectedSummaryPersona: 'fact',
+      chatHistory: [
+        {
+          sender: 'assistant',
+          content: '안녕하세요! \'잔소리메이트 (ZansoriMate)\' 포트폴리오 전용 AI 도우미입니다. 🤖\n\n서비스의 기획 배경, 핵심 기능, 기술 스택, 차별점 등에 대해 자유롭게 물어보세요!\n\n⚠️ 안내: 본 챗봇은 기획서 정책에 따라 포트폴리오와 관련된 질문에만 답변할 수 있습니다.',
+          time: '방금 전',
+          isWarning: false
+        }
+      ]
+    };
+
+    // 샘플 회의록 텍스트
+    const SAMPLE_TRANSCRIPT = `[오늘 오전 10:30 스프린트 회의록 요약]
+참여자: 지훈(팀장), 민수(백엔드), 수진(마케팅)
+
+지훈: 다들 오셨죠? 2분기 프로덕트 릴리즈 관련해서 업무 싱크 맞추겠습니다.
+민수: 결제 모듈에서 간헐적으로 에러 로그가 찍히는데 모니터링 대시보드 연동 작업이 급선무입니다. 내일 오후 6시까지 핫픽스 배포하겠습니다.
+수진: 온보딩 튜토리얼 A/B 테스트 지표 집계는 목요일 스프린트 전까지 취합해서 슬랙에 공유하겠습니다.
+지훈: 좋습니다. 저는 오늘 당장 3시간 뒤까지 2분기 신규 기능 소개 발표자료 초안 작성 끝내서 팀에 올리겠습니다.
+지훈: 다들 마감 시간 꼭 지켜주세요! 안 지키면 잔소리봇 가동합니다.`;
+
+    // 초기화
+    window.addEventListener('DOMContentLoaded', () => {
+      loadInitialData();
+      renderChatMessages();
+    });
+
+    function loadInitialData() {
+      // 1. LocalStorage 우선 확인
+      const localTasks = localStorage.getItem('ZANSORI_TASKS');
+      if (localTasks) {
+        try { appState.tasks = JSON.parse(localTasks); } catch (e) {}
+      }
+
+      // 2. Google Apps Script 백엔드와 비동기 동기화
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((data) => {
+            if (data) {
+              if (data.user) {
+                appState.currentUser = data.user;
+                updateUserUI();
+              }
+              if (data.tasks && (!appState.tasks || appState.tasks.length === 0)) {
+                appState.tasks = data.tasks;
+                saveTasksToLocal();
+              }
+              if (data.naggingLogs) {
+                appState.naggingLogs = data.naggingLogs;
+              }
+              renderKanbanCards();
+              renderAdminStats();
+            }
+          })
+          .getInitialData();
+      }
+
+      // 백엔드 미응답 시 기본값 세팅
+      if (!appState.tasks || appState.tasks.length === 0) {
+        appState.tasks = getDefaultTasksList();
+        saveTasksToLocal();
+      }
+
+      updateUserUI();
+      renderKanbanCards();
+      renderAdminStats();
+    }
+
+    function getDefaultTasksList() {
+      const now = Date.now();
+      return [
+        {
+          id: 'task-1',
+          title: '2분기 릴리즈 신규 기능 소개 발표자료 초안 작성',
+          description: '회의록 액션아이템: 핵심 아젠다 정리 및 슬라이드 디자인 템플릿 완성',
+          meetingSource: '2분기 프로덕트 싱크',
+          status: 'inprogress',
+          priority: 'urgent',
+          assigneeName: '지훈 (나)',
+          assigneeAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Jihoon',
+          dueDate: new Date(now + 3 * 3600 * 1000).toISOString(),
+          naggingMode: 'fact',
+          naggingIntensity: 'extreme',
+          naggingCount: 2
+        },
+        {
+          id: 'task-2',
+          title: '결제 모듈 에러 로그 모니터링 대시보드 연동',
+          description: '에러 로그 실시간 알림 파이프라인 구성 및 웹훅 테스트',
+          meetingSource: '백엔드 정기 스프린트',
+          status: 'todo',
+          priority: 'high',
+          assigneeName: '민수',
+          assigneeAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Minsu',
+          dueDate: new Date(now + 24 * 3600 * 1000).toISOString(),
+          naggingMode: 'fact',
+          naggingIntensity: 'standard',
+          naggingCount: 1
+        },
+        {
+          id: 'task-3',
+          title: '온보딩 튜토리얼 A/B 테스트 지표 집계',
+          description: '신규 유입 사용자 첫날 잔존율 지표 취합 및 스프린트 보고자료 작성',
+          meetingSource: '그로스 마케팅 회의',
+          status: 'todo',
+          priority: 'medium',
+          assigneeName: '수진',
+          assigneeAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Sujin',
+          dueDate: new Date(now + 72 * 3600 * 1000).toISOString(),
+          naggingMode: 'aegyo',
+          naggingIntensity: 'mild',
+          naggingCount: 0
+        },
+        {
+          id: 'task-4',
+          title: '디자인 시스템 컬러 토큰 v2 배포',
+          description: '다크 네오-택타일 테마 토큰 확정 및 컴포넌트 라이브러리 싱크',
+          meetingSource: '디자인 싱크',
+          status: 'done',
+          priority: 'low',
+          assigneeName: '지훈 (나)',
+          assigneeAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Jihoon',
+          dueDate: new Date(now - 5 * 3600 * 1000).toISOString(),
+          naggingMode: 'tsundere',
+          naggingIntensity: 'standard',
+          naggingCount: 0
+        }
+      ];
+    }
+
+    function saveTasksToLocal() {
+      localStorage.setItem('ZANSORI_TASKS', JSON.stringify(appState.tasks));
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.saveTasks(appState.tasks);
+      }
+    }
+
+    // 탭 전환
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const activeEl = document.getElementById('tab-' + tabId);
+      if (activeEl) activeEl.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('text-primary', 'font-bold');
+        btn.classList.add('text-on-muted');
+      });
+      const activeBtn = document.getElementById('nav-btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('text-primary', 'font-bold');
+        activeBtn.classList.remove('text-on-muted');
+      }
+
+      if (tabId === 'admin') {
+        renderAdminStats();
+      }
+    }
+
+    // 토스트 안내
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      box.textContent = msg;
+      box.classList.remove('opacity-0', 'pointer-events-none');
+      box.classList.add('opacity-100');
+      setTimeout(() => {
+        box.classList.remove('opacity-100');
+        box.classList.add('opacity-0', 'pointer-events-none');
+      }, 3000);
+    }
+
+    // 유저 UI 업데이트
+    function updateUserUI() {
+      const headerBadge = document.getElementById('headerAdminBadge');
+      const avatarImg = document.getElementById('userAvatarImg');
+      const adminEmail = document.getElementById('adminUserEmailLabel');
+      const roleEmail = document.getElementById('roleModalEmail');
+
+      if (appState.currentUser.isAdmin) {
+        headerBadge.classList.remove('hidden');
+        avatarImg.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=AdminJihoon';
+        if (adminEmail) adminEmail.textContent = '접속자: ' + appState.currentUser.email + ' (관리자)';
+        if (roleEmail) roleEmail.textContent = '현재: ' + appState.currentUser.email + ' (관리자)';
+        document.getElementById('adminDeniedView').classList.add('hidden');
+        document.getElementById('adminAuthorizedView').classList.remove('hidden');
+      } else {
+        headerBadge.classList.add('hidden');
+        avatarImg.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=Sua';
+        if (adminEmail) adminEmail.textContent = '접속자: ' + appState.currentUser.email + ' (일반 팀원)';
+        if (roleEmail) roleEmail.textContent = '현재: ' + appState.currentUser.email + ' (일반 팀원)';
+        document.getElementById('adminDeniedView').classList.remove('hidden');
+        document.getElementById('adminAuthorizedView').classList.add('hidden');
+      }
+    }
+
+    function toggleRoleSwitchModal() {
+      const m = document.getElementById('roleSwitchModal');
+      m.classList.toggle('hidden');
+    }
+
+    function switchCurrentUserRole(isAdmin) {
+      if (isAdmin) {
+        appState.currentUser = { email: 'admin@zansorimate.com', name: '김지훈 (관리자)', isAdmin: true };
+      } else {
+        appState.currentUser = { email: 'sua@startup.com', name: '이수아 (일반 멤버)', isAdmin: false };
+      }
+      updateUserUI();
+      renderAdminStats();
+      showToast(isAdmin ? '🛡️ 관리자 권한으로 변경되었습니다.' : '👤 일반 팀원으로 변경되었습니다.');
+    }
+
+    // 칸반 보드 렌더링
+    function renderKanbanCards() {
+      const container = document.getElementById('kanbanCardsContainer');
+      container.innerHTML = '';
+
+      const tasks = appState.tasks;
+      const filtered = tasks.filter(t => {
+        if (appState.currentFilter === 'all') return true;
+        return t.status === appState.currentFilter;
+      });
+
+      // 카운트 갱신
+      document.getElementById('totalTaskCountBadge').textContent = tasks.length;
+      document.getElementById('count-all').textContent = tasks.length;
+      document.getElementById('count-todo').textContent = tasks.filter(t => t.status === 'todo').length;
+      document.getElementById('count-inprogress').textContent = tasks.filter(t => t.status === 'inprogress').length;
+      document.getElementById('count-done').textContent = tasks.filter(t => t.status === 'done').length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="py-10 text-center rounded-2xl bg-surface-container border border-dashed border-surface-high text-on-muted text-xs">해당 상태의 할 일이 없습니다.</div>';
+        return;
+      }
+
+      filtered.forEach(task => {
+        const isDone = task.status === 'done';
+        const card = document.createElement('article');
+        card.className = 'relative flex flex-col p-4 rounded-2xl border transition-all duration-200 ' +
+          (task.status === 'inprogress'
+            ? 'bg-surface-container border-secondary/40 shadow-neon-orange'
+            : isDone
+            ? 'bg-surface-container/60 border-surface-high/40 opacity-75'
+            : 'bg-surface-container border-surface-high shadow-md');
+
+        const dueInfo = getDueText(task.dueDate, isDone);
+        const intensityInfo = getIntensityBadgeInfo(task.naggingIntensity);
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                task.status === 'inprogress' ? 'bg-secondary text-white' : isDone ? 'bg-surface-high text-on-muted' : 'bg-surface-high text-on-surface'
+              }">
+                ${task.status === 'todo' ? '할 일' : task.status === 'inprogress' ? '진행 중' : '완료'}
+              </span>
+              ${task.meetingSource ? `<span class="px-2 py-0.5 rounded-full bg-surface-variant text-on-muted text-[11px] font-medium truncate max-w-[120px]">📋 ${task.meetingSource}</span>` : ''}
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1 ${dueInfo.style}">
+              <span class="material-symbols-outlined text-[13px]">alarm</span>
+              ${dueInfo.text}
+            </span>
+          </div>
+
+          <h3 class="mt-2.5 font-bold text-sm sm:text-base leading-snug ${isDone ? 'line-through text-on-muted' : 'text-white'}">
+            ${task.title}
+          </h3>
+
+          <div class="mt-3 p-2.5 rounded-xl bg-surface-high/60 border border-surface-high/50 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="text-on-muted">잔소리 강도:</span>
+              <span class="${intensityInfo.style}">${intensityInfo.text}</span>
+            </div>
+            <div class="text-[11px] text-on-muted">
+              ${isDone ? '정시 완료 🎉' : (task.naggingCount > 0 ? `총 ${task.naggingCount}회 독촉됨` : '자동 독촉 대기 중')}
+            </div>
+          </div>
+
+          <div class="mt-4 pt-2 border-t border-surface-high/50 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <img src="${task.assigneeAvatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=Task'}" class="w-6 h-6 rounded-full object-cover">
+              <span class="text-xs font-semibold text-white truncate max-w-[80px]">${task.assigneeName}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${!isDone ? `
+                <button onclick="openNaggingModal('${task.id}')" class="px-2.5 py-1.5 rounded-xl bg-surface-variant hover:bg-secondary/20 hover:text-secondary text-on-surface text-xs font-bold active:scale-95 transition-all flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px] text-secondary">send</span>
+                  <span>콕 찌르기</span>
+                </button>
+              ` : ''}
+              ${task.status === 'todo' ? `
+                <button onclick="changeTaskStatus('${task.id}', 'inprogress')" class="px-2.5 py-1.5 rounded-xl bg-secondary hover:bg-secondary/90 text-white text-xs font-bold active:scale-95 transition-all">
+                  시작
+                </button>
+              ` : ''}
+              ${task.status === 'inprogress' ? `
+                <button onclick="changeTaskStatus('${task.id}', 'done')" class="px-2.5 py-1.5 rounded-xl bg-primary hover:bg-primary-container text-black text-xs font-extrabold active:scale-95 transition-all flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">check</span>
+                  완료
+                </button>
+              ` : ''}
+              ${isDone ? `
+                <button onclick="changeTaskStatus('${task.id}', 'inprogress')" class="px-2 py-1.5 rounded-xl bg-surface-high hover:bg-surface-variant text-on-muted text-xs font-medium active:scale-95 transition-all flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">undo</span>
+                  되돌리기
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function getDueText(dueDateStr, isDone) {
+      if (isDone) return { text: '독촉 해제됨 🎉', style: 'bg-surface-high text-on-muted' };
+      const now = Date.now();
+      const due = new Date(dueDateStr).getTime();
+      const diffHours = Math.round((due - now) / (1000 * 3600));
+
+      if (diffHours <= 0) return { text: '🚨 마감 초과!', style: 'bg-prod-crimson/20 text-prod-crimson border border-prod-crimson/40 animate-pulse' };
+      if (diffHours <= 3) return { text: `D-Day ${diffHours}시간 전`, style: 'bg-secondary/20 text-secondary border border-secondary/40 animate-pulse' };
+      if (diffHours <= 24) return { text: 'D-1 (내일 마감)', style: 'bg-primary/20 text-primary border border-primary/40' };
+      const days = Math.ceil(diffHours / 24);
+      return { text: `D-${days}`, style: 'bg-surface-high text-on-muted' };
+    }
+
+    function getIntensityBadgeInfo(intensity) {
+      switch (intensity) {
+        case 'extreme': return { text: '🔥🔥🔥 극대노', style: 'text-secondary font-bold' };
+        case 'standard': return { text: '⚡⚡ 보통', style: 'text-primary font-bold' };
+        default: return { text: '🌱 순한맛', style: 'text-on-muted' };
+      }
+    }
+
+    function setFilter(filter) {
+      appState.currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === filter) {
+          btn.className = 'filter-btn active shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-primary text-black shadow-neon-yellow';
+          btn.querySelector('span:last-child').className = 'w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-extrabold bg-black text-primary';
+        } else {
+          btn.className = 'filter-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-surface-high text-on-muted hover:text-white';
+          btn.querySelector('span:last-child').className = 'w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-extrabold bg-surface-variant text-on-surface';
+        }
+      });
+      renderKanbanCards();
+    }
+
+    function changeTaskStatus(taskId, newStatus) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = newStatus;
+        saveTasksToLocal();
+        renderKanbanCards();
+        renderAdminStats();
+        if (newStatus === 'done') {
+          showToast(`🎉 '${task.title}' 완료 처리되었습니다!`);
+        }
+      }
+    }
+
+    function submitUrgentTask() {
+      const urgent = appState.tasks.find(t => t.id === 'task-1') || appState.tasks[0];
+      if (urgent) {
+        changeTaskStatus(urgent.id, 'done');
+        showToast('🎉 마감 직전 긴급 제출 완료! 잔소리봇이 칭찬 모드로 전환되었습니다.');
+      }
+    }
+
+    function setIntensity(lvl) {
+      appState.globalIntensity = lvl;
+      document.querySelectorAll('.intensity-btn').forEach(btn => {
+        if (btn.getAttribute('data-intensity') === lvl) {
+          btn.className = 'intensity-btn py-2 rounded-xl text-xs font-bold transition-all text-center bg-primary text-black shadow-neon-yellow';
+        } else {
+          btn.className = 'intensity-btn py-2 rounded-xl text-xs font-bold transition-all text-center text-on-muted hover:text-white';
+        }
+      });
+      const label = document.getElementById('globalIntensityLabel');
+      if (lvl === 'extreme') label.textContent = '🔥 극대노 (팀 슬랙 공개박제)';
+      else if (lvl === 'standard') label.textContent = '⚡ 표준 팩폭 (적당히 재촉)';
+      else label.textContent = '🌱 순한맛 (칭찬 중심)';
+      showToast(`잔소리 강도가 [${lvl}]으로 변경되었습니다.`);
+    }
+
+    // 모달 관리
+    function openNaggingModal(taskId) {
+      const task = appState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      appState.modalTask = task;
+      appState.modalPersona = task.naggingMode || 'fact';
+      appState.modalIntensity = task.naggingIntensity || 'standard';
+
+      document.getElementById('modalTargetAssignee').textContent = task.assigneeName;
+      document.getElementById('modalTargetSource').textContent = task.meetingSource || '회의록 태스크';
+      document.getElementById('modalTargetTitle').textContent = task.title;
+
+      updateModalButtons();
+      generateModalNaggingText();
+
+      document.getElementById('naggingModal').classList.remove('hidden');
+    }
+
+    function closeNaggingModal() {
+      document.getElementById('naggingModal').classList.add('hidden');
+    }
+
+    function setModalPersona(p) {
+      appState.modalPersona = p;
+      updateModalButtons();
+      generateModalNaggingText();
+    }
+
+    function setModalIntensity(i) {
+      appState.modalIntensity = i;
+      updateModalButtons();
+      generateModalNaggingText();
+    }
+
+    function updateModalButtons() {
+      ['fact', 'aegyo', 'tsundere', 'sparta'].forEach(p => {
+        const btn = document.getElementById('m-persona-' + p);
+        if (btn) {
+          btn.className = (p === appState.modalPersona)
+            ? 'modal-p-btn py-2 px-1 rounded-xl text-xs font-bold bg-primary text-black shadow-neon-yellow'
+            : 'modal-p-btn py-2 px-1 rounded-xl text-xs font-bold bg-surface-high text-on-muted';
+        }
+      });
+
+      ['mild', 'standard', 'extreme'].forEach(i => {
+        const btn = document.getElementById('m-intensity-' + i);
+        if (btn) {
+          btn.className = (i === appState.modalIntensity)
+            ? 'modal-i-btn py-1.5 rounded-lg text-xs font-bold bg-secondary text-white shadow-neon-orange'
+            : 'modal-i-btn py-1.5 rounded-lg text-xs font-bold text-on-muted';
+        }
+      });
+    }
+
+    function generateModalNaggingText() {
+      const task = appState.modalTask;
+      if (!task) return;
+      const box = document.getElementById('modalNaggingMessageBox');
+      box.textContent = 'Gemini AI가 가장 찰진 잔소리를 생성 중입니다...';
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            box.textContent = '“' + res.message + '”';
+          })
+          .generateNaggingMessage(task.title, task.assigneeName, task.dueDate, appState.modalPersona, appState.modalIntensity);
+      } else {
+        // Fallback Client Template
+        const msg = getFallbackNagging(task.title, task.assigneeName, appState.modalPersona, appState.modalIntensity);
+        box.textContent = '“' + msg + '”';
+      }
+    }
+
+    function getFallbackNagging(title, name, p, i) {
+      if (p === 'fact') {
+        if (i === 'extreme') return `${name}님, '${title}' 아직도 안 하셨나요? 30분 뒤 팀 전체 슬랙에 공개 박제됩니다. 💀`;
+        if (i === 'standard') return `${name}님, '${title}' 마감 3시간 전입니다! 딴짓할 시간 없어요 ⏱️ 얼른 제출합시다!`;
+        return `${name}님, '${title}' 마감이 다가옵니다. 지금 시작하셔야 정시 퇴근 가능합니다.`;
+      }
+      if (p === 'aegyo') {
+        if (i === 'extreme') return `${name}님 엉엉 ㅠㅠ '${title}' 마감 지나면 저 팀장님한테 혼나요 제발 지금 해주세요오 😭`;
+        return `${name}님! '${title}' 오늘 안에 끝내주시면 제가 맛있는 커피 쏠게요 힘내요오 🥺☕`;
+      }
+      if (p === 'sparta') {
+        return `${name}! 변명은 패배자나 하는 것이다! '${title}' 끝날 때까지 수면 금지! 지금 즉시 완료 보고해라! ⚡⚡`;
+      }
+      return `야 ${name}, '${title}' 아직도 붙잡고 있냐? 딱히 널 위해 재촉하는 건 아니니까 제때 해둬라 😤`;
+    }
+
+    function copyModalNaggingMessage() {
+      const text = document.getElementById('modalNaggingMessageBox').textContent.replace(/“|”/g, '');
+      navigator.clipboard.writeText(text);
+      const btnText = document.getElementById('modalCopyBtnText');
+      btnText.textContent = '복사 완료!';
+      setTimeout(() => btnText.textContent = '문구 복사', 2000);
+    }
+
+    function sendModalNaggingAction() {
+      if (!appState.modalTask) return;
+      appState.modalTask.naggingCount = (appState.modalTask.naggingCount || 0) + 1;
+      saveTasksToLocal();
+      renderKanbanCards();
+      renderAdminStats();
+      closeNaggingModal();
+      showToast(`📨 '${appState.modalTask.assigneeName}' 님에게 잔소리가 성공적으로 발송되었습니다!`);
+    }
+
+    // 직접 할 일 추가
+    function openAddTaskModal() {
+      document.getElementById('addTaskModal').classList.remove('hidden');
+    }
+    function closeAddTaskModal() {
+      document.getElementById('addTaskModal').classList.add('hidden');
+    }
+    function handleAddTaskSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('newTaskTitle').value.trim();
+      const assignee = document.getElementById('newTaskAssignee').value.trim() || '나';
+      const hours = Number(document.getElementById('newTaskHours').value) || 24;
+
+      if (!title) return;
+
+      const newTask = {
+        id: 'task-' + Date.now(),
+        title: title,
+        description: '직접 생성된 액션아이템',
+        meetingSource: '직접 등록',
+        status: 'todo',
+        priority: 'medium',
+        assigneeName: assignee,
+        assigneeAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${assignee}`,
+        dueDate: new Date(Date.now() + hours * 3600 * 1000).toISOString(),
+        naggingMode: 'fact',
+        naggingIntensity: appState.globalIntensity,
+        naggingCount: 0
+      };
+
+      appState.tasks.unshift(newTask);
+      saveTasksToLocal();
+      renderKanbanCards();
+      renderAdminStats();
+      closeAddTaskModal();
+      document.getElementById('newTaskTitle').value = '';
+      showToast('✨ 새 할 일이 칸반 보드에 추가되었습니다!');
+    }
+
+    // TAB 2: 회의록 요약 로직
+    function loadSampleTranscript() {
+      document.getElementById('transcriptTextarea').value = SAMPLE_TRANSCRIPT;
+      document.getElementById('charCount').textContent = SAMPLE_TRANSCRIPT.length + '자 입력됨';
+    }
+
+    function clearTranscript() {
+      document.getElementById('transcriptTextarea').value = '';
+      document.getElementById('charCount').textContent = '0자 입력됨';
+      document.getElementById('summaryResultArea').classList.add('hidden');
+    }
+
+    document.getElementById('transcriptTextarea').addEventListener('input', (e) => {
+      document.getElementById('charCount').textContent = e.target.value.length + '자 입력됨';
+    });
+
+    function runMeetingSummary() {
+      const text = document.getElementById('transcriptTextarea').value.trim();
+      if (!text) {
+        showToast('⚠️ 회의록 텍스트를 입력해주세요.');
+        return;
+      }
+
+      const btn = document.getElementById('btnSummarize');
+      const origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Gemini AI 요약 및 할 일 추출 중...</span>';
+
+      const handleSuccess = (res) => {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        appState.extractedSummary = res;
+        appState.extractedTasks = (res.tasks || []).map(t => ({ ...t, selected: true }));
+        renderSummaryResult();
+      };
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(handleSuccess)
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+            showToast('⚠️ 오류: ' + err.message);
+          })
+          .generateTasksFromMeeting(text);
+      } else {
+        setTimeout(() => {
+          handleSuccess({
+            title: '2분기 프로덕트 릴리즈 싱크',
+            summary3Lines: [
+              '회의를 통해 신규 기능 릴리즈 일정 및 액션아이템이 도출되었습니다.',
+              '결제 에러 모니터링 및 발표자료 작성이 긴급 과제로 지정되었습니다.',
+              '팀원별 잔소리 페르소나와 마감 기한이 매칭되었습니다.'
+            ],
+            tasks: [
+              { title: '발표자료 초안 작성 및 템플릿 완성', assigneeName: '지훈', dueDateHours: 3, priority: 'urgent' },
+              { title: '결제 모듈 에러 로그 모니터링 연동', assigneeName: '민수', dueDateHours: 24, priority: 'high' },
+              { title: '온보딩 A/B 테스트 성과 집계 보고', assigneeName: '수진', dueDateHours: 72, priority: 'medium' }
+            ]
+          });
+        }, 1000);
+      }
+    }
+
+    function renderSummaryResult() {
+      const area = document.getElementById('summaryResultArea');
+      area.classList.remove('hidden');
+
+      const sumList = document.getElementById('summaryList');
+      sumList.innerHTML = '';
+      (appState.extractedSummary.summary3Lines || []).forEach((line, idx) => {
+        sumList.innerHTML += `
+          <li class="flex items-start gap-2 text-xs text-white leading-relaxed">
+            <span class="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">${idx + 1}</span>
+            <span>${line}</span>
+          </li>
+        `;
+      });
+
+      const taskContainer = document.getElementById('extractedTasksContainer');
+      taskContainer.innerHTML = '';
+      appState.extractedTasks.forEach((t, idx) => {
+        taskContainer.innerHTML += `
+          <div onclick="toggleExtractedTask(${idx})" class="p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
+            t.selected ? 'bg-surface-high border-secondary/40 shadow-sm' : 'bg-surface-low border-surface-high/40 opacity-60'
+          }">
+            <input type="checkbox" ${t.selected ? 'checked' : ''} class="mt-1 w-4 h-4 rounded text-primary accent-primary cursor-pointer shrink-0">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-bold text-white leading-tight">${t.title}</span>
+                <span class="px-2 py-0.5 rounded-full bg-secondary/20 text-secondary text-[10px] font-bold shrink-0">
+                  ${t.priority === 'urgent' ? '긴급 🔥' : '보통 ⚡'}
+                </span>
+              </div>
+              <div class="flex items-center gap-2 mt-1.5 text-[11px] text-on-muted">
+                <span>담당: <strong class="text-primary">${t.assigneeName}</strong></span>
+                <span>•</span>
+                <span>마감: ${t.dueDateHours ? t.dueDateHours + '시간 뒤' : '익일'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function toggleExtractedTask(idx) {
+      if (!appState.extractedTasks[idx]) return;
+      appState.extractedTasks[idx].selected = !appState.extractedTasks[idx].selected;
+      renderSummaryResult();
+    }
+
+    function setPersonaSelection(p) {
+      appState.selectedSummaryPersona = p;
+      ['fact', 'aegyo', 'tsundere'].forEach(id => {
+        const btn = document.getElementById('persona-btn-' + id);
+        if (id === p) {
+          btn.className = 'p-2 rounded-2xl text-left flex flex-col gap-0.5 bg-secondary text-white shadow-neon-orange';
+        } else {
+          btn.className = 'p-2 rounded-2xl text-left flex flex-col gap-0.5 bg-surface-high text-on-muted hover:text-white';
+        }
+      });
+    }
+
+    function transferExtractedTasksToKanban() {
+      const selected = appState.extractedTasks.filter(t => t.selected);
+      if (selected.length === 0) {
+        showToast('⚠️ 최소 1개 이상의 할 일을 선택해주세요.');
+        return;
+      }
+
+      selected.forEach(t => {
+        appState.tasks.unshift({
+          id: 'task-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+          title: t.title,
+          description: t.description || '회의록에서 자동 추출됨',
+          meetingSource: appState.extractedSummary.title || '회의 요약',
+          status: 'todo',
+          priority: t.priority || 'medium',
+          assigneeName: t.assigneeName || '팀원',
+          assigneeAvatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${t.assigneeName || 'Member'}`,
+          dueDate: new Date(Date.now() + (t.dueDateHours || 24) * 3600 * 1000).toISOString(),
+          naggingMode: appState.selectedSummaryPersona,
+          naggingIntensity: 'standard',
+          naggingCount: 0
+        });
+      });
+
+      saveTasksToLocal();
+      renderKanbanCards();
+      renderAdminStats();
+      showToast(`🎉 ${selected.length}건의 할 일이 칸반 보드로 전송되었습니다!`);
+      switchTab('board');
+    }
+
+    function copySummaryText() {
+      if (!appState.extractedSummary) return;
+      const text = `[${appState.extractedSummary.title}]\n\n📌 3줄 요약:\n${appState.extractedSummary.summary3Lines.map((l, i) => `${i+1}. ${l}`).join('\n')}\n\n✅ 실행 할 일:\n${appState.extractedTasks.map(t => `- [${t.assigneeName}] ${t.title}`).join('\n')}`;
+      navigator.clipboard.writeText(text);
+      showToast('📋 요약 결과가 클립보드에 복사되었습니다.');
+    }
+
+    // TAB 3: 챗봇 로직 (가드레일 검증)
+    function renderChatMessages() {
+      const box = document.getElementById('chatMessagesBox');
+      box.innerHTML = '';
+      appState.chatHistory.forEach(msg => {
+        const isUser = msg.sender === 'user';
+        const el = document.createElement('div');
+        el.className = `flex items-start gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`;
+        el.innerHTML = `
+          <div class="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
+            isUser ? 'bg-secondary text-white' : msg.isWarning ? 'bg-prod-alert/30 text-prod-crimson border border-prod-crimson/40' : 'bg-primary/20 text-primary'
+          }">
+            <span class="material-symbols-outlined text-[16px]">${isUser ? 'person' : 'smart_toy'}</span>
+          </div>
+          <div class="max-w-[82%] p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap break-keep ${
+            isUser ? 'bg-secondary text-white font-medium rounded-tr-none' : msg.isWarning ? 'bg-prod-alert/20 border border-prod-crimson/50 text-prod-crimson font-bold rounded-tl-none shadow-neon-red' : 'bg-surface-container border border-surface-high text-white font-normal rounded-tl-none shadow-md'
+          }">
+            ${msg.isWarning ? '<div class="flex items-center gap-1 mb-1 text-[10px] text-prod-crimson font-extrabold uppercase"><span class="material-symbols-outlined text-[14px]">warning</span><span>예외 처리 가드레일 발동</span></div>' : ''}
+            ${msg.content}
+            <div class="text-[9px] mt-1 text-right ${isUser ? 'text-white/70' : 'text-on-muted'}">${msg.time}</div>
+          </div>
+        `;
+        box.appendChild(el);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      sendChatMessage(input.value);
+      input.value = '';
+    }
+
+    function sendChatMessage(text) {
+      const prompt = (text || '').trim();
+      if (!prompt) return;
+
+      appState.chatHistory.push({
+        sender: 'user',
+        content: prompt,
+        time: '방금 전',
+        isWarning: false
+      });
+      renderChatMessages();
+
+      const btn = document.getElementById('btnSendChat');
+      btn.disabled = true;
+
+      const handleReply = (reply) => {
+        btn.disabled = false;
+        const isWarning = reply.includes('죄송합니다. 포트폴리오와 관련된 질문에만 답변할 수 있습니다.');
+        appState.chatHistory.push({
+          sender: 'assistant',
+          content: reply,
+          time: '방금 전',
+          isWarning: isWarning
+        });
+        renderChatMessages();
+      };
+
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(handleReply)
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            handleReply('오류가 발생했습니다: ' + err.message);
+          })
+          .chatPortfolioAssistant(prompt);
+      } else {
+        // Fallback Client Guardrail Test
+        setTimeout(() => {
+          const lower = prompt.toLowerCase();
+          const irrelevant = ['날씨', '주식', '코딩', '파이썬', '로또', '라면', '요리'].some(k => lower.includes(k));
+          if (irrelevant) {
+            handleReply('죄송합니다. 포트폴리오와 관련된 질문에만 답변할 수 있습니다.');
+          } else {
+            handleReply('잔소리메이트는 AI가 회의록을 요약해 할 일을 쪼개주고, 맵고 달달한 페르소나 잔소리로 팀원들의 마감일을 챙겨주는 초간편 협업 플랫폼입니다.');
+          }
+        }, 500);
+      }
+    }
+
+    function resetChatMessages() {
+      appState.chatHistory = [
+        {
+          sender: 'assistant',
+          content: '대화가 초기화되었습니다. 잔소리메이트 서비스나 포트폴리오에 대해 무엇이든 질문해주세요!',
+          time: '방금 전',
+          isWarning: false
+        }
+      ];
+      renderChatMessages();
+    }
+
+    // TAB 4: 관리자 통계 렌더링
+    function renderAdminStats() {
+      const total = appState.tasks.length;
+      const done = appState.tasks.filter(t => t.status === 'done').length;
+      const rate = total ? Math.round((done / total) * 100) : 0;
+      const totalNag = appState.tasks.reduce((acc, cur) => acc + (cur.naggingCount || 0), 5);
+
+      document.getElementById('adminStatTasks').textContent = total + '개';
+      document.getElementById('adminStatDoneRate').textContent = '완료율 ' + rate + '%';
+      document.getElementById('adminStatNagging').textContent = totalNag + '회';
+
+      const logContainer = document.getElementById('adminNaggingLogsList');
+      logContainer.innerHTML = '';
+      const logs = (appState.naggingLogs && appState.naggingLogs.length) ? appState.naggingLogs : [
+        { recipient: '지훈', persona: '🤖 팩폭봇', message: '지훈님, 발표자료 초안 마감 3시간 전입니다! 딴짓할 시간 없어요 ⏱️', time: '10분 전', status: '전송 성공' },
+        { recipient: '민수', persona: '🤖 팩폭봇', message: '결제 모듈 에러 로그 모니터링 대시보드 연동 마감일 D-1입니다.', time: '1시간 전', status: '전송 성공' },
+        { recipient: '수진', persona: '🥺 애교봇', message: '수진님~ 온보딩 튜토리얼 지표 집계 오늘 안으로 해주실 수 있나용? ✨', time: '3시간 전', status: '전송 성공' }
+      ];
+
+      logs.forEach(log => {
+        logContainer.innerHTML += `
+          <div class="p-3 rounded-2xl bg-surface-low border border-surface-high/50 flex flex-col gap-1">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-1.5 font-bold">
+                <span class="text-secondary">${log.persona}</span>
+                <span class="text-on-muted">→</span>
+                <span class="text-white">${log.recipient}</span>
+              </div>
+              <span class="text-[10px] text-on-muted">${log.time}</span>
+            </div>
+            <p class="text-xs text-on-muted leading-relaxed truncate">“${log.message}”</p>
+            <div class="flex items-center justify-between text-[10px] pt-1">
+              <span class="text-emerald-400 font-bold">✓ ${log.status}</span>
+              <span class="text-on-muted">Slack / In-App Push</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+  </script>
+</body>
+</html>
+
